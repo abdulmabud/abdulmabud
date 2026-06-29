@@ -7,11 +7,17 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: stats-update
+  cancel-in-progress: false
+
 jobs:
   generate-stats:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: lowlighter/metrics@latest
         with:
@@ -21,10 +27,20 @@ jobs:
           base: header, activity, community, repositories
           filename: github-metrics.svg
 
-      - run: |
+      - name: Move SVG into assets folder
+        run: |
           mkdir -p assets
           mv github-metrics.svg assets/stats.svg
 
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Update stats image"
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/stats.svg
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Update stats image"
+          git pull --rebase origin main
+          git push origin main
