@@ -19,7 +19,17 @@ jobs:
       - name: Download stats SVG
         run: |
           mkdir -p assets
-          curl -s "https://github-readme-stats.vercel.app/api?username=abdulmabud&show_icons=true" -o assets/stats.svg
+          curl -sf -A "Mozilla/5.0" \
+            "https://github-readme-stats.vercel.app/api?username=abdulmabud&show_icons=true" \
+            -o assets/stats.svg
+
+      - name: Validate SVG
+        run: |
+          if ! grep -q "<svg" assets/stats.svg; then
+            echo "::error::Downloaded file is not a valid SVG (likely rate-limited or errored). Aborting commit."
+            cat assets/stats.svg
+            exit 1
+          fi
 
       - name: Commit and push
         run: |
