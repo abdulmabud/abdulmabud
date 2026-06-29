@@ -1,0 +1,23 @@
+name: Generate Stats Image
+on:
+  schedule:
+    - cron: '0 0 * * *'   # runs daily
+  workflow_dispatch:        # lets you run it manually too
+
+jobs:
+  generate-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: lowlighter/metrics@latest
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          user: abdulmabud
+          template: classic
+          base: header, activity, community, repositories
+          output_action: ./github-metrics.svg
+      - run: |
+          mkdir -p assets
+          mv github-metrics.svg assets/stats.svg
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update stats image"
